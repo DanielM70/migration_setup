@@ -8,33 +8,50 @@ users = {
     2: {'name': 'migration', 'boundary': 'arn:aws:iam::aws:policy/AWSApplicationMigrationAgentPolicy'}
 }
 
+Account_ID = boto3.client('sts').get_caller_identity()['Account'] 
 
-for id, info in users.items():
-    
-    print("\nUser_ID:", id, info)
+def addIAMusers():
+    for id, info in users.items():
+        
+        print("\nUser_ID:", id, info)
 
-    client = boto3.client('iam')
-    
-    client.create_user(
-        UserName = users[id]['name'],
-        PermissionsBoundary = users[id]['boundary'],
-        Tags=[
-            {
-                'Key': 'Purpose',
-                'Value': 'MigrationProcess'
-            }
-        ]
-    )
-    
+        client = boto3.client('iam')
+        
+        client.create_user(
+            UserName = users[id]['name'],
+            PermissionsBoundary = users[id]['boundary'],
+            Tags=[
+                {
+                    'Key': 'Purpose',
+                    'Value': 'MigrationProcess'
+                }
+            ]
+        )
+        
 
-    data = client.create_access_key(
-    UserName=users[id]['name']
-    )
+        data = client.create_access_key(
+        UserName=users[id]['name']
+        )
 
-    print('++++++++++++++++++')
-    print(users[id]['name'], 'created')
-    print(data['AccessKey']['UserName'])
-    print(data['AccessKey']['AccessKeyId'])
-    print(data['AccessKey']['SecretAccessKey'])
+        print('++++++++++++++++++')
+        print(users[id]['name'], 'created')
+        print(data['AccessKey']['UserName'])
+        print(data['AccessKey']['AccessKeyId'])
+        print(data['AccessKey']['SecretAccessKey'])
 
-    ## Create S3 bucket 
+
+## Create S3 bucket 
+
+def createS3bucket():
+
+    print(Account_ID)
+    client = boto3.client('s3')
+
+    bucket_name = {
+        client.create_bucket(
+            Bucket = Account_ID + '-migrationfactory',
+        )
+    }
+
+addIAMusers()
+createS3bucket()
