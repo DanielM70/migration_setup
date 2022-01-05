@@ -1,4 +1,5 @@
 import boto3
+from parameters import putParameter
 
 ## List of IAM users to create
 ## This will create user, assign associated policy, create a secret/key
@@ -33,6 +34,10 @@ def addIAMusers():
         UserName=users[id]['name']
         )
 
+        #putParameter( Account_ID, 'UserName', data['AccessKey']['UserName'], 'false')
+        putParameter( Account_ID, data['AccessKey']['UserName'] + '/AccessKeyId', data['AccessKey']['AccessKeyId'], 'false')
+        putParameter( Account_ID, data['AccessKey']['UserName'] + '/SecretAccessKey', data['AccessKey']['SecretAccessKey'], 'True')
+
         print('++++++++++++++++++')
         print(users[id]['name'], 'created')
         print(data['AccessKey']['UserName'])
@@ -49,9 +54,10 @@ def createS3bucket():
 
     bucket_name = {
         client.create_bucket(
-            Bucket = Account_ID + '-migrationfactory',
+            Bucket = Account_ID + 'migrationfactory',
         )
     }
+    print(bucket_name)
 
 addIAMusers()
 createS3bucket()
