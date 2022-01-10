@@ -1,7 +1,7 @@
 import boto3
 import sys
 
-def putParameter(Account_ID, key, value, secure ):
+def putParameter(Account_ID, key, value, secure):
 
     if secure == True:
         typestring = 'SecureString'
@@ -11,7 +11,7 @@ def putParameter(Account_ID, key, value, secure ):
     client = boto3.client('ssm')
 
     response = client.put_parameter(
-        Name = '/' + Account_ID + '/MigrationFactory/' + key,
+        Name = '/' + Account_ID + '/migrationFactory/' + key,
         Description = 'Migration Factory Setting',
         Value = value,
         Type=typestring,
@@ -29,11 +29,19 @@ def removeParameter(Account_ID, key):
     
     client = boto3.client('ssm')
 
-    Name2 = '/' + Account_ID + '/MigrationFactory/' + key
-    print(Name2)
-
     client.delete_parameter(
-    Name = '/' + Account_ID + '/MigrationFactory/' + key,  
+    Name = '/' + Account_ID + '/migrationFactory/' + key,  
    )
+
+def getParameter(Account_ID, key):
+    
+    client = boto3.client('ssm')
+
+    response=client.get_parameter(
+        Name = '/'+Account_ID+'/migrationFactory/'+key,
+    )
+
+    value=response['Parameter']['Value']
+    print(value)
 
 

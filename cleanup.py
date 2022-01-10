@@ -1,23 +1,34 @@
 import botocore
 import boto3
+import subprocess
 from parameters import removeParameter
-
 
 users = {
     1: {'name': 'discovery', 'boundary': 'arn:aws:iam::aws:policy/AWSApplicationDiscoveryAgentAccess'}, 
     2: {'name': 'migration', 'boundary': 'arn:aws:iam::aws:policy/AWSApplicationMigrationAgentPolicy'}
 }
 
+
+
 Account_ID = boto3.client('sts').get_caller_identity()['Account'] 
+
+rootPath = '/Users/daniel.mulrooney/workspaces/migration_setup/'
+checkoutFolder = 'migrationFactory'
 
 ## Clean up s3 bucket
 
 def cleanUpBucket():
 
-    client = boto3.client('s3')
+    bucketName = [Account_ID+'-migration']
 
+    #s3 = boto3.resource('s3')
+
+    #bucket = s3.Bucket(bucketName)
+    #bucket.objects.delete()
+
+    client = boto3.client('s3')
     client.delete_bucket(
-        Bucket = Account_ID + '-migrationfactory',
+        Bucket = bucketName,
     )
 
 
@@ -59,20 +70,36 @@ def removeIAMusers():
                 UserName = key_id['AccessKeyMetadata'][0]['UserName']
             )
 
-            removeParameter( Account_ID, key_id['AccessKeyMetadata'][0]['UserName'] + '/AccessKeyId')
-            removeParameter( Account_ID, key_id['AccessKeyMetadata'][0]['UserName'] + '/SecretAccessKey')
+            removeParameter(Account_ID, key_id['AccessKeyMetadata'][0]['UserName'] + '/AccessKeyId')
+            removeParameter(Account_ID, key_id['AccessKeyMetadata'][0]['UserName'] + '/SecretAccessKey')
 
         except botocore.exceptions.ClientError as error:
 
             if error.response['Error']['Code'] == 'NoSuchEntity':
                 print('No such user')
                 continue 
-        #continue
         
+def cleanupSecurityGroup():
 
-
+    client = boto3.client('ec2')
+    sg_id = client.describe_security_groups(
+        GroupNames=[
+        'mfsg',
+        ],
+    )
+    #print(sg_id)
+    response = client.delete_security_group(GroupId=sg_id['SecurityGroups'][0]['GroupId'])
+    print(response)
 
 ## Add Remove Functions as needed
 
-cleanUpBucket()
+print('Deleting migrationFactory folder')
+delcmd = 'rm -rf migrationFactory'
+subprocess.check_call([delcmd], shell=True, cwd=rootPath)
+
+
+
+
 removeIAMusers()
+cleanupSecurityGroup()
+cleanUpBucket()

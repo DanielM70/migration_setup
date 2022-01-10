@@ -1,10 +1,11 @@
 #!/bin/bash
 
-cd MigrationFactory/deployment/
+path=$1
+fixpath=$path/deployment
+echo "Inside fixScript"
+echo $fixpath
+dos2unix $fixpath/build-s3-dist.sh
+ls -l $fixpath/build-s3-dist.sh
+sed -i '' 's/CFN-templates\///g' $fixpath/build-s3-dist.sh
+sed -i '' "s|\$PWD|$fixpath|" $fixpath/build-s3-dist.sh
 
-path=`pwd`
-
-echo $path
-
-dos2unix $path/build-s3-dist.sh
-sed -i '' 's/CFN-templates\///g' $path/build-s3-dist.sh

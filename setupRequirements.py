@@ -10,6 +10,9 @@ users = {
 }
 
 Account_ID = boto3.client('sts').get_caller_identity()['Account'] 
+my_session = boto3.session.Session()
+Region = my_session.region_name
+
 
 def addIAMusers():
     for id, info in users.items():
@@ -35,8 +38,8 @@ def addIAMusers():
         )
 
         #putParameter( Account_ID, 'UserName', data['AccessKey']['UserName'], 'false')
-        putParameter( Account_ID, data['AccessKey']['UserName'] + '/AccessKeyId', data['AccessKey']['AccessKeyId'], 'false')
-        putParameter( Account_ID, data['AccessKey']['UserName'] + '/SecretAccessKey', data['AccessKey']['SecretAccessKey'], 'True')
+        putParameter(Account_ID, data['AccessKey']['UserName'] + '/AccessKeyId', data['AccessKey']['AccessKeyId'], 'false')
+        putParameter(Account_ID, data['AccessKey']['UserName'] + '/SecretAccessKey', data['AccessKey']['SecretAccessKey'], 'True')
 
         print('++++++++++++++++++')
         print(users[id]['name'], 'created')
@@ -49,15 +52,16 @@ def addIAMusers():
 
 def createS3bucket():
 
-    print(Account_ID)
     client = boto3.client('s3')
 
     bucket_name = {
         client.create_bucket(
-            Bucket = Account_ID + 'migrationfactory',
+            ACL='public-read',
+            Bucket = Account_ID + '-migration' + '-' + Region,
         )
     }
-    print(bucket_name)
+    putParameter(Account_ID, 'Bucket_Name', bucket_name, 'false')
+
 
 addIAMusers()
 createS3bucket()
