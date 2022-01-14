@@ -1,0 +1,24 @@
+MigrationFactory:
+    - enable MigrationService
+    - update schema
+
+
+EC2 related:
+    - generate ssh key - push to secrets?
+    - Launch ec2 instance - migration host
+    - login
+    - checkout code
+
+Backlog:
+    - logging
+    - try:except everywhere
+
+Update Logic:
+    - add ability to add AWS account
+        - run cloudformation (MGN) in that account
+        - Update dynamoDB attributes to include new Account
+        - have a flag or something that indicates this logic runs on cmd line
+
+
+
+
