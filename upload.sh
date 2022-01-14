@@ -4,7 +4,7 @@
 Account_ID=`aws sts get-caller-identity --query Account --output text`
 rootPath='/Users/daniel.mulrooney/workspaces/migration_setup'
 solutionName='migrationFactory'       ## Replace with customer 3 letter acronym
-version='0.01'                        ## should be incremented by platform only
+version='2.02'                        ## should be incremented by platform only
 region=`aws configure get region`
 cd $rootPath/$solutionName/deployment/
 

@@ -2,63 +2,57 @@ import boto3
 import os
 import subprocess
 import git
+import properties
+from cognito import cognitoAddUser
 from parameters import getParameter, putParameter
-from utility import createSecurityGroup, getSubnetId
-from cloudformation import deployMigrationFactoryCore, deployMGN
+from cloudformation import deployMigrationFactoryCore, pushOutputs
 
-Account_ID = boto3.client('sts').get_caller_identity()['Account'] 
-
-
-## Customizable if wanted
-bucketName = Account_ID + '-migration'
-solutionName = 'migrationFactory'       ## Replace with customer 3 letter acronym
-version = '0.01'                        ## should be incremented by platform only
+#Account_ID = boto3.client('sts').get_caller_identity()['Account'] 
 
 
+# Used to update CloudFormation templates 
+# DO NOT add region, that is appended in the CFN template
 
-## Migration Factory repo
-## Currently pointed to AWS (may change to PVTR managed)
-repoName = 'git@github.com:awslabs/aws-cloudendure-migration-factory-solution.git'
-
-## Path where you've checked out this code
-rootPath = '/Users/daniel.mulrooney/workspaces/migration_setup/'
-checkoutFolder = 'migrationFactory'
+bldbucketName = getParameter('Account_ID') + '-migration'
 
 ### Main Body of Scipt
 
 ## Check out migration factory code from AWS
-git.Repo.clone_from(repoName, checkoutFolder)
+git.Repo.clone_from(properties.repoName, properties.checkoutFolder)
 print('Repo cloned')
 
 ## Update build-s3-dist.sh script from AWS to address issue with template path and set root path
 ## We may start cloning AWS repo and upload to our own, if that's the case we can fix this stuff
 ## then and remove this. Each version will need to be tested for any errors.
-fixcmd = './fixScript.sh' + ' ' + rootPath + checkoutFolder
+fixcmd = './fixScript.sh' + ' ' + properties.rootPath + properties.checkoutFolder
 subprocess.call(['chmod', '0755', '/Users/daniel.mulrooney/workspaces/migration_setup/fixScript.sh'])
 subprocess.check_call([fixcmd], shell=True, cwd='/Users/daniel.mulrooney/workspaces/migration_setup/')
 
 ## Execute the build-s3-dist.sh script with required arguments
 #buildcmd = './build-s3-dist.sh' + ' ' + bucketName + ' ' + solutionName + ' ' + version
 
-buildcmd = './build-s3-dist.sh' + ' ' + bucketName + ' ' + solutionName + ' ' + version
-subprocess.call(['chmod', '0755', rootPath + checkoutFolder + '/deployment/build-s3-dist.sh'])
-subprocess.check_call([buildcmd], shell=True, cwd=rootPath + checkoutFolder + '/deployment/')
+buildcmd = './build-s3-dist.sh' + ' ' + bldbucketName + ' ' + properties.solutionName + ' ' + properties.version
+subprocess.call(['chmod', '0755', properties.rootPath + properties.checkoutFolder + '/deployment/build-s3-dist.sh'])
+subprocess.check_call([buildcmd], shell=True, cwd=properties.rootPath + properties.checkoutFolder + '/deployment/')
 
 ## Once all the lamda is built and templates updated upload to required S3 buckets
 print('Upload content')
 uploadcmd = './upload.sh'
 subprocess.call(['chmod', '0755', 'upload.sh'])
-subprocess.check_call([uploadcmd], shell=True, cwd=rootPath)
+subprocess.check_call([uploadcmd], shell=True, cwd=properties.rootPath)
 
 
 ## Start building the environment using provided AWS cloud formation templates
 
 print('Executing Migration Factory core cloudformation')
-stack_id_transient_core = deployMigrationFactoryCore(Account_ID,bucketName)
+stack_id = deployMigrationFactoryCore(getParameter('Account_ID'),bldbucketName)
+response=pushOutputs(stack_id)
 
-print(stack_id_transient_core)
+print(response)
 
-print('Executing Migration Factory MGN cloudformation')
-stack_id_transient_mgn = deployMGN(Account_ID,bucketName)
+## Add users to Cognito
 
-print(stack_id_transient_mgn)
+for id, info in properties.cognitoUsers.items():
+    
+    print('Adding user to Cognito')
+    cognitoAddUser(properties.cognitoUsers[id]['name'], properties.cognitoUsers[id]['role'])

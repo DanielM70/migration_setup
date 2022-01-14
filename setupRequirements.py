@@ -1,29 +1,34 @@
 import boto3
 from parameters import putParameter
+import properties
 
-## List of IAM users to create
-## This will create user, assign associated policy, create a secret/key
 
-users = {
-    1: {'name': 'discovery', 'boundary': 'arn:aws:iam::aws:policy/AWSApplicationDiscoveryAgentAccess'}, 
-    2: {'name': 'migration', 'boundary': 'arn:aws:iam::aws:policy/AWSApplicationMigrationAgentPolicy'}
-}
+
 
 Account_ID = boto3.client('sts').get_caller_identity()['Account'] 
 my_session = boto3.session.Session()
 Region = my_session.region_name
 
+## Figure out some parameters used throughout the application
+
+putParameter('Account_ID', Account_ID, 'True')
+putParameter('Region', Region, 'True')
+
+
+## List of IAM users to create
+## This will create user, assign associated policy, create a secret/key
+## List of users is in properties.py file
 
 def addIAMusers():
-    for id, info in users.items():
+    for id, info in properties.iamUsers.items():
         
         print("\nUser_ID:", id, info)
 
         client = boto3.client('iam')
         
         client.create_user(
-            UserName = users[id]['name'],
-            PermissionsBoundary = users[id]['boundary'],
+            UserName = properties.iamUsers[id]['name'],
+            PermissionsBoundary = properties.iamUsers[id]['boundary'],
             Tags=[
                 {
                     'Key': 'Purpose',
@@ -34,21 +39,25 @@ def addIAMusers():
         
 
         data = client.create_access_key(
-        UserName=users[id]['name']
+        UserName=properties.iamUsers[id]['name']
         )
 
         #putParameter( Account_ID, 'UserName', data['AccessKey']['UserName'], 'false')
-        putParameter(Account_ID, data['AccessKey']['UserName'] + '/AccessKeyId', data['AccessKey']['AccessKeyId'], 'false')
-        putParameter(Account_ID, data['AccessKey']['UserName'] + '/SecretAccessKey', data['AccessKey']['SecretAccessKey'], 'True')
+        putParameter(data['AccessKey']['UserName'] + '/AccessKeyId', data['AccessKey']['AccessKeyId'], 'false')
+        putParameter(data['AccessKey']['UserName'] + '/SecretAccessKey', data['AccessKey']['SecretAccessKey'], 'True')
 
         print('++++++++++++++++++')
-        print(users[id]['name'], 'created')
+        print(properties.iamUsers[id]['name'], 'created')
         print(data['AccessKey']['UserName'])
         print(data['AccessKey']['AccessKeyId'])
         print(data['AccessKey']['SecretAccessKey'])
 
 
 ## Create S3 bucket 
+## This bucket is where CFN and lambda functions are uploaded for setup process
+## Bucket has region code so lamda will work (DO NOT CHANGE it will break stuff)
+## Bucket has public ACL due to lambda deploy (DO NOT change it will break stuff)
+## Nothing confidential is included in this bucket
 
 def createS3bucket():
 
@@ -60,7 +69,8 @@ def createS3bucket():
             Bucket = Account_ID + '-migration' + '-' + Region,
         )
     }
-    putParameter(Account_ID, 'Bucket_Name', bucket_name, 'false')
+    print(bucket_name)
+    putParameter('Bucket_Name', bucket_name, 'false')
 
 
 addIAMusers()

@@ -55,19 +55,19 @@ def getSubnetId():
 ## to do: need to figure out how to apply ACL
 ## to do: fix path to upload to version and remove global/regional-s3-assets folder name
 
-def uploadFiles():
-    path = ["migrationFactory/deployment/global-s3-assets", "migrationFactory/deployment/regional-s3-assets"] 
+#def uploadFiles():
+#    path = ["migrationFactory/deployment/global-s3-assets", "migrationFactory/deployment/regional-s3-assets"] 
 
-    for p in path:
+#    for p in path:
 
-        for root,dirs,files in os.walk(p):
+#        for root,dirs,files in os.walk(p):
             
-            for file in files:
+#            for file in files:
 
-                client = boto3.client('s3')
+#                client = boto3.client('s3')
 
-                p1=p.split('/')[2]
+ #               p1=p.split('/')[2]
+#
+ #               client.upload_file(os.path.join(root, file), bucketName , solutionName+'/'+version+'/'+p1+'/'+file)
 
-                client.upload_file(os.path.join(root, file), bucketName , solutionName+'/'+version+'/'+p1+'/'+file)
-
-                print(p1+'/'+file, 'uploaded')
+ #               print(p1+'/'+file, 'uploaded')
